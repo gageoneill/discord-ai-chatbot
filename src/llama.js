@@ -6,7 +6,7 @@ class LlamaClient {
     this.modelName = modelName;
   }
 
-  async generate(prompt, context = [], summary = null) {
+  async generate(prompt, context = [], summary = null, searchResults = null) {
     try {
       // Enhanced system prompt with better instructions for context understanding
       let systemPrompt = `You are a friendly and sometimes funny Discord bot named after the server. You engage naturally in conversations and remember what was discussed.
@@ -18,7 +18,9 @@ Key Instructions:
 - Keep responses concise (1-3 sentences max) but contextually aware
 - You can suggest GIFs by including "[GIF: search term]" in your response when appropriate
 - If someone asks about something mentioned earlier, recall and reference it
-- Adapt your tone to match the conversation (casual, helpful, funny, etc.)`;
+- Adapt your tone to match the conversation (casual, helpful, funny, etc.)
+- When provided with web search results, use them to give accurate, up-to-date information
+- Cite sources when using search results (e.g., "According to [source]...")`;
 
       let conversationHistory = '';
       if (context.length > 0) {
@@ -33,6 +35,20 @@ Key Instructions:
       let fullPrompt = `<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
 ${systemPrompt}<|eot_id|>`;
+
+      // Add web search results if available
+      if (searchResults && searchResults.length > 0) {
+        let searchContext = 'Web Search Results:\n\n';
+        searchResults.forEach((result, index) => {
+          searchContext += `${index + 1}. ${result.title}\n`;
+          searchContext += `   ${result.snippet}\n`;
+          searchContext += `   Source: ${result.link}\n\n`;
+        });
+
+        fullPrompt += `<|start_header_id|>search_results<|end_header_id|>
+
+${searchContext}<|eot_id|>`;
+      }
 
       // Add conversation summary if available (for very long conversations)
       if (summary) {
