@@ -46,8 +46,27 @@ class WebSearcher {
         const $snippet = $result.find('.result__snippet');
 
         const title = $titleLink.text().trim();
-        const link = $titleLink.attr('href');
+        let link = $titleLink.attr('href');
         const snippet = $snippet.text().trim();
+
+        // Decode DuckDuckGo redirect URLs
+        // Format: //duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.example.com%2F
+        if (link && link.includes('uddg=')) {
+          try {
+            const uddgMatch = link.match(/uddg=([^&]+)/);
+            if (uddgMatch && uddgMatch[1]) {
+              link = decodeURIComponent(uddgMatch[1]);
+              console.log(`🔗 Decoded URL: ${link}`);
+            }
+          } catch (e) {
+            console.error('Error decoding URL:', e.message);
+          }
+        }
+
+        // Ensure URL has protocol
+        if (link && !link.startsWith('http')) {
+          link = 'https:' + link;
+        }
 
         if (title && link && snippet) {
           results.push({
