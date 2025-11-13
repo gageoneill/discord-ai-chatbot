@@ -3,6 +3,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const LlamaClient = require('./llama');
 const GifSearcher = require('./gifSearch');
 const ContextManager = require('./contextManager');
+const WebSearcher = require('./webSearch');
 
 // Configuration
 const config = {
@@ -12,7 +13,8 @@ const config = {
   tenorApiKey: process.env.TENOR_API_KEY,
   botPrefix: process.env.BOT_PREFIX || '!',
   maxContextMessages: parseInt(process.env.MAX_CONTEXT_MESSAGES) || 10,
-  responseChance: parseFloat(process.env.RESPONSE_CHANCE) || 0.3
+  responseChance: parseFloat(process.env.RESPONSE_CHANCE) || 0.3,
+  enableWebSearch: process.env.ENABLE_WEB_SEARCH !== 'false' // Enabled by default
 };
 
 // Initialize clients
@@ -27,6 +29,7 @@ const discord = new Client({
 const llama = new LlamaClient(config.llamaApiUrl, config.llamaModelName);
 const gifSearcher = new GifSearcher(config.tenorApiKey);
 const contextManager = new ContextManager(config.maxContextMessages);
+const webSearcher = new WebSearcher();
 
 // Bot ready event
 discord.once('ready', async () => {
@@ -81,12 +84,19 @@ discord.on('messageCreate', async (message) => {
       prompt = "Hey!";
     }
 
+    // Check if web search would be helpful
+    let searchResults = null;
+    if (config.enableWebSearch && webSearcher.shouldSearch(prompt)) {
+      console.log('🔍 Web search triggered for query');
+      searchResults = await webSearcher.search(prompt, 3); // Get top 3 results
+    }
+
     // Get conversation context and summary
     const context = contextManager.getContext(channelId);
     const summary = contextManager.getSummary(channelId);
 
-    // Generate response from Llama with enhanced context
-    const response = await llama.generate(prompt, context, summary);
+    // Generate response from Llama with enhanced context and search results
+    const response = await llama.generate(prompt, context, summary, searchResults);
 
     if (!response) {
       await message.reply("I'm having trouble thinking right now... 🤔");
