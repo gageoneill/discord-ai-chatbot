@@ -6,7 +6,8 @@
       "Bash(tasklist:*)",
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
