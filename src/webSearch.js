@@ -89,12 +89,18 @@ class WebSearcher {
       'explain',
       'current',
       'latest',
-      'news about',
+      'today',
+      'recent',
+      'new',
+      'news',
+      'top',
       'information on',
       'details about',
       'price of',
       'weather in',
-      'definition of'
+      'definition of',
+      'happening',
+      'update'
     ];
 
     // Check if message contains search indicators
