@@ -87,8 +87,18 @@ discord.on('messageCreate', async (message) => {
     // Check if web search would be helpful
     let searchResults = null;
     if (config.enableWebSearch && webSearcher.shouldSearch(prompt)) {
-      console.log('🔍 Web search triggered for query');
+      console.log('🔍 Web search triggered for query:', prompt);
       searchResults = await webSearcher.search(prompt, 3); // Get top 3 results
+
+      if (searchResults && searchResults.length > 0) {
+        console.log(`✅ Found ${searchResults.length} search results`);
+        searchResults.forEach((result, i) => {
+          console.log(`   ${i + 1}. ${result.title}`);
+          console.log(`      ${result.link}`);
+        });
+      } else {
+        console.log('⚠️  No search results found');
+      }
     }
 
     // Get conversation context and summary
