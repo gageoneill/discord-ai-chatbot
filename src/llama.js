@@ -24,9 +24,11 @@ Search Results Usage (CRITICAL - Follow exactly!):
 - When you receive web search results, you MUST ONLY use information from those exact results
 - DO NOT make up information, dates, or URLs - only use what's provided in the search results
 - DO NOT hallucinate or invent news stories that aren't in the search results
-- ALWAYS include the actual source URLs from the search results in your response
-- Format URLs using Discord's <URL> syntax: <https://example.com>
-- Example: "According to POLITICO <https://politico.com/article>, [info from snippet]"
+- DO NOT mention sources like "Google News", "Polygon", "IGN", or ANY website not in the search results
+- DO NOT create fake URLs or modify the URLs provided
+- ALWAYS copy and paste the EXACT URLs from the search results using <URL> format
+- Example: "According to [Site from search results] <[exact URL from results]>, [info from snippet]"
+- If you don't see a source in the search results, DO NOT mention it
 - If the search results don't contain good information, say "I couldn't find current information about that"
 - Include 1-2 relevant links maximum from the actual search results provided
 - NEVER use reference numbers like (1) or (2) - use actual URLs only
@@ -59,12 +61,15 @@ ${systemPrompt}<|eot_id|>`;
 
       // Add web search results if available
       if (searchResults && searchResults.length > 0) {
-        let searchContext = 'Web Search Results:\n\n';
+        let searchContext = 'IMPORTANT: Use ONLY these search results. Do NOT make up other sources.\n\n';
         searchResults.forEach((result, index) => {
-          searchContext += `${index + 1}. ${result.title}\n`;
-          searchContext += `   ${result.snippet}\n`;
-          searchContext += `   Source: ${result.link}\n\n`;
+          searchContext += `Result ${index + 1}:\n`;
+          searchContext += `Title: ${result.title}\n`;
+          searchContext += `Snippet: ${result.snippet}\n`;
+          searchContext += `URL: ${result.link}\n`;
+          searchContext += `---\n`;
         });
+        searchContext += '\nREMINDER: Use ONLY the URLs and information from the results above. Do NOT mention Google News, Polygon, or any other sources not listed here.';
 
         fullPrompt += `<|start_header_id|>search_results<|end_header_id|>
 
@@ -96,7 +101,8 @@ ${prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
         prompt: fullPrompt,
         stream: false,
         options: {
-          temperature: 0.7,
+          // Lower temperature when search results are provided to reduce hallucination
+          temperature: searchResults && searchResults.length > 0 ? 0.3 : 0.7,
           top_p: 0.95,
           top_k: 50,
           num_predict: 200,
