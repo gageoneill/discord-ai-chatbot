@@ -32,7 +32,7 @@ const contextManager = new ContextManager(config.maxContextMessages);
 const webSearcher = new WebSearcher();
 
 // Bot ready event
-discord.once('ready', async () => {
+discord.once('clientReady', async () => {
   console.log(`✅ Bot logged in as ${discord.user.tag}`);
 
   // Check Llama availability
