@@ -57,8 +57,12 @@ discord.on('messageCreate', async (message) => {
   const botMentioned = message.mentions.has(discord.user);
   const hasPrefix = content.startsWith(config.botPrefix);
 
-  // Add message to context
-  contextManager.addMessage(channelId, message.author.username, content);
+  // Track if this is a reply to another message
+  const replyTo = message.reference ? message.reference.messageId : null;
+
+  // Add ALL messages to context (not just ones we respond to)
+  // This helps the bot understand ongoing conversations
+  contextManager.addMessage(channelId, message.author.username, content, false, replyTo);
 
   // Only respond when directly mentioned or using prefix
   if (!botMentioned && !hasPrefix) return;
@@ -77,11 +81,12 @@ discord.on('messageCreate', async (message) => {
       prompt = "Hey!";
     }
 
-    // Get conversation context
+    // Get conversation context and summary
     const context = contextManager.getContext(channelId);
+    const summary = contextManager.getSummary(channelId);
 
-    // Generate response from Llama
-    const response = await llama.generate(prompt, context);
+    // Generate response from Llama with enhanced context
+    const response = await llama.generate(prompt, context, summary);
 
     if (!response) {
       await message.reply("I'm having trouble thinking right now... 🤔");
@@ -92,8 +97,8 @@ discord.on('messageCreate', async (message) => {
     const gifQuery = gifSearcher.extractGifQuery(response);
     let textResponse = gifSearcher.removeGifTags(response);
 
-    // Add bot response to context
-    contextManager.addMessage(channelId, discord.user.username, textResponse);
+    // Add bot response to context with isBot flag
+    contextManager.addMessage(channelId, discord.user.username, textResponse, true, replyTo);
 
     // Send text response
     if (textResponse) {
