@@ -40,16 +40,31 @@ class GifSearcher {
 
   // Extract GIF search terms from bot response
   extractGifQuery(text) {
+    // Try to match [GIF: search term]
     const gifMatch = text.match(/\[GIF:\s*([^\]]+)\]/i);
     if (gifMatch && gifMatch[1]) {
       return gifMatch[1].trim();
     }
+
+    // Also try to catch cases where bot just says "GIF:" without brackets
+    const looseMatch = text.match(/GIF:\s*([^\n.!?]+)/i);
+    if (looseMatch && looseMatch[1]) {
+      console.log('⚠️  Bot used loose GIF format, extracting anyway:', looseMatch[1]);
+      return looseMatch[1].trim();
+    }
+
     return null;
   }
 
   // Remove GIF tags from text
   removeGifTags(text) {
-    return text.replace(/\[GIF:\s*[^\]]+\]/gi, '').trim();
+    // Remove [GIF: ...] tags
+    let cleaned = text.replace(/\[GIF:\s*[^\]]+\]/gi, '').trim();
+
+    // Also remove loose "GIF: ..." patterns
+    cleaned = cleaned.replace(/GIF:\s*[^\n.!?]+/gi, '').trim();
+
+    return cleaned;
   }
 }
 
