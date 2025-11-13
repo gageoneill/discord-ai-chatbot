@@ -31,6 +31,35 @@ const gifSearcher = new GifSearcher(config.tenorApiKey);
 const contextManager = new ContextManager(config.maxContextMessages);
 const webSearcher = new WebSearcher();
 
+// Detect if a message is a simple request that doesn't need full context
+function detectSimpleRequest(message) {
+  const lowerMessage = message.toLowerCase();
+
+  // Simple greetings
+  const greetings = ['hi', 'hello', 'hey', 'sup', 'yo', 'wassup', 'hiya'];
+  if (greetings.some(g => lowerMessage === g || lowerMessage === `${g}!`)) {
+    return true;
+  }
+
+  // Quick reactions
+  const reactions = ['lol', 'lmao', 'rofl', 'haha', 'nice', 'cool', 'wow', 'bruh', 'oof', 'rip'];
+  if (reactions.some(r => lowerMessage === r || lowerMessage === `${r}!`)) {
+    return true;
+  }
+
+  // GIF/meme requests
+  if (lowerMessage.includes('gif') || lowerMessage.includes('meme') || lowerMessage.includes('react')) {
+    return true;
+  }
+
+  // Very short messages (likely quick interactions)
+  if (message.split(' ').length <= 3) {
+    return true;
+  }
+
+  return false;
+}
+
 // Bot ready event
 discord.once('ready', async () => {
   console.log(`✅ Bot logged in as ${discord.user.tag}`);
@@ -44,10 +73,10 @@ discord.once('ready', async () => {
     console.warn('   Make sure your Llama server is running (e.g., Ollama)');
   }
 
-  // Clean up old contexts periodically
+  // Clean up old contexts periodically (more aggressive for fresher conversations)
   setInterval(() => {
-    contextManager.cleanOldContexts();
-  }, 600000); // Every 10 minutes
+    contextManager.cleanOldContexts(900000); // 15 minutes instead of 1 hour
+  }, 300000); // Every 5 minutes
 });
 
 // Message handler
@@ -84,6 +113,9 @@ discord.on('messageCreate', async (message) => {
       prompt = "Hey!";
     }
 
+    // Detect if this is a simple/quick request that doesn't need full context
+    const isSimpleRequest = detectSimpleRequest(prompt);
+
     // Check if web search would be helpful
     let searchResults = null;
     if (config.enableWebSearch && webSearcher.shouldSearch(prompt)) {
@@ -101,8 +133,12 @@ discord.on('messageCreate', async (message) => {
       }
     }
 
-    // Get conversation context and summary
-    const context = contextManager.getContext(channelId);
+    // Get conversation context - use less context for simple requests
+    let context = contextManager.getContext(channelId);
+    if (isSimpleRequest) {
+      console.log('💬 Simple request detected - using light context');
+      context = context.slice(-3); // Only last 3 messages for simple requests
+    }
     const summary = contextManager.getSummary(channelId);
 
     // Generate response from Llama with enhanced context and search results
