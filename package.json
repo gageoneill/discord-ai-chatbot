@@ -1,0 +1,18 @@
+{
+  "name": "local-llama-discord-chatbot",
+  "version": "1.0.0",
+  "description": "Local Llama Discord chatbot - AI-powered Discord bot using your local Llama 3.1 model",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": ["discord", "ai", "chatbot", "llama"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "axios": "^1.6.7"
+  }
+}
