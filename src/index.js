@@ -10,6 +10,8 @@ const config = {
   discordToken: process.env.DISCORD_TOKEN,
   llamaApiUrl: process.env.LLAMA_API_URL || 'http://localhost:11434/api/generate',
   llamaModelName: process.env.LLAMA_MODEL_NAME || 'llama2:7b',
+  lmStudioApiUrl: process.env.LMSTUDIO_API_URL || 'http://localhost:1234/v1/chat/completions',
+  lmStudioModelName: process.env.LMSTUDIO_MODEL_NAME || 'mirothinker',
   tenorApiKey: process.env.TENOR_API_KEY,
   botPrefix: process.env.BOT_PREFIX || '!',
   maxContextMessages: parseInt(process.env.MAX_CONTEXT_MESSAGES) || 10,
@@ -26,7 +28,12 @@ const discord = new Client({
   ]
 });
 
-const llama = new LlamaClient(config.llamaApiUrl, config.llamaModelName);
+const llama = new LlamaClient(
+  config.llamaApiUrl,
+  config.llamaModelName,
+  config.lmStudioApiUrl,
+  config.lmStudioModelName
+);
 const gifSearcher = new GifSearcher(config.tenorApiKey);
 const contextManager = new ContextManager(config.maxContextMessages);
 const webSearcher = new WebSearcher();

@@ -1,13 +1,42 @@
 const axios = require('axios');
 
 class LlamaClient {
-  constructor(apiUrl, modelName) {
-    this.apiUrl = apiUrl;
+  constructor(apiUrl, modelName, lmStudioUrl = null, lmStudioModel = null) {
+    this.ollamaUrl = apiUrl;
+    this.lmStudioUrl = lmStudioUrl;
     this.modelName = modelName;
+
+    // Model registry: maps model names to their backend configuration
+    this.modelRegistry = {
+      // Ollama models
+      'llama3.1:8b': { backend: 'ollama', url: this.ollamaUrl },
+      'llama3.1': { backend: 'ollama', url: this.ollamaUrl },
+      'mistral:7b': { backend: 'ollama', url: this.ollamaUrl },
+      'mistral': { backend: 'ollama', url: this.ollamaUrl },
+
+      // LM Studio models (add your models here)
+      'mirothinker': { backend: 'lmstudio', url: this.lmStudioUrl, modelName: lmStudioModel },
+    };
+  }
+
+  // Get backend configuration for a model
+  getModelConfig(modelName) {
+    // Check if model is in registry
+    if (this.modelRegistry[modelName]) {
+      return this.modelRegistry[modelName];
+    }
+
+    // Default to Ollama if not found
+    console.log(`⚠️  Model "${modelName}" not in registry, assuming Ollama`);
+    return { backend: 'ollama', url: this.ollamaUrl };
   }
 
   async generate(prompt, context = [], summary = null, searchResults = null) {
     try {
+      // Get model configuration
+      const modelConfig = this.getModelConfig(this.modelName);
+      console.log(`🤖 Using ${modelConfig.backend} backend for model: ${this.modelName}`);
+
       // Enhanced system prompt with better instructions for context understanding
       let systemPrompt = `You are a friendly and sometimes funny Discord bot named after the server. You engage naturally in conversations and remember what was discussed.
 
@@ -96,25 +125,68 @@ ${prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 `;
 
-      const response = await axios.post(this.apiUrl, {
-        model: this.modelName,
-        prompt: fullPrompt,
-        stream: false,
-        options: {
-          // Lower temperature when search results are provided to reduce hallucination
-          temperature: searchResults && searchResults.length > 0 ? 0.3 : 0.7,
-          top_p: 0.95,
-          top_k: 50,
-          num_predict: 200,
-          repeat_penalty: 1.1,
-          stop: ['<|eot_id|>', '<|end_of_text|>']
-        }
-      }, {
-        timeout: 60000 // 60 second timeout for larger models
-      });
+      let response;
 
-      if (response.data && response.data.response) {
-        return response.data.response.trim();
+      // Call appropriate backend
+      if (modelConfig.backend === 'lmstudio') {
+        // LM Studio uses OpenAI-compatible API
+        const messages = [];
+        messages.push({ role: 'system', content: systemPrompt });
+
+        // Add search results
+        if (searchResults && searchResults.length > 0) {
+          let searchContext = 'IMPORTANT: Use ONLY these search results.\n\n';
+          searchResults.forEach((result, index) => {
+            searchContext += `Result ${index + 1}:\nTitle: ${result.title}\nSnippet: ${result.snippet}\nURL: ${result.link}\n---\n`;
+          });
+          messages.push({ role: 'system', content: searchContext });
+        }
+
+        // Add conversation history
+        if (context.length > 0) {
+          context.forEach(msg => {
+            const role = msg.isBot ? 'assistant' : 'user';
+            messages.push({ role, content: `${msg.author}: ${msg.content}` });
+          });
+        }
+
+        // Add current prompt
+        messages.push({ role: 'user', content: prompt });
+
+        response = await axios.post(modelConfig.url, {
+          model: modelConfig.modelName || this.modelName,
+          messages: messages,
+          temperature: searchResults && searchResults.length > 0 ? 0.3 : 0.7,
+          max_tokens: 200,
+          stream: false
+        }, {
+          timeout: 60000
+        });
+
+        if (response.data && response.data.choices && response.data.choices[0]) {
+          return response.data.choices[0].message.content.trim();
+        }
+      } else {
+        // Ollama API
+        response = await axios.post(modelConfig.url, {
+          model: this.modelName,
+          prompt: fullPrompt,
+          stream: false,
+          options: {
+            temperature: searchResults && searchResults.length > 0 ? 0.3 : 0.7,
+            top_p: 0.95,
+            top_k: 50,
+            num_predict: 200,
+            repeat_penalty: 1.1,
+            stop: ['<|eot_id|>', '<|end_of_text|>']
+          }
+        }, {
+          timeout: 60000
+        });
+
+        if (response.data && response.data.response) {
+          return response.data.response.trim();
+        }
       }
 
       return null;
