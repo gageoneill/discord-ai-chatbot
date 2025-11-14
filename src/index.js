@@ -84,6 +84,12 @@ discord.on('messageCreate', async (message) => {
       prompt = "Hey!";
     }
 
+    // Check if user is asking for a GIF/meme
+    const wantsGif = /\b(gif|meme)\b/i.test(prompt);
+    if (wantsGif) {
+      console.log('🎬 GIF request detected');
+    }
+
     // Check if web search would be helpful
     let searchResults = null;
     if (config.enableWebSearch && webSearcher.shouldSearch(prompt)) {
