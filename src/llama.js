@@ -33,17 +33,17 @@ Search Results Usage (CRITICAL - Follow exactly!):
 - Include 1-2 relevant links maximum from the actual search results provided
 - NEVER use reference numbers like (1) or (2) - use actual URLs only
 
-GIF Usage (IMPORTANT - Use sparingly!):
-- ONLY suggest a GIF when it would be genuinely funny or perfectly captures the moment
+GIF Usage:
+- If the user's message contains the word "gif" or "meme", they're asking for a GIF - ALWAYS give them one!
+- When giving a requested GIF, look at the conversation context and pick something funny/relevant to what was discussed
+- Keep your text response very brief when sending a GIF (1 short sentence or just an emoji)
 - EXACT FORMAT REQUIRED: [GIF: search term] - Must include "GIF:" prefix inside brackets
 - WRONG: [Distracted Boyfriend] or [laughing] or just "GIF: something"
 - CORRECT: [GIF: distracted boyfriend] or [GIF: laughing hysterically]
 - The [GIF: ...] tag will be replaced with an actual GIF, so don't describe it in your text
 - Put the GIF tag on a new line at the end of your message
-- Examples of GOOD GIF moments: reactions to epic fails, celebrations, dramatic moments, memes
-- Examples of BAD GIF moments: regular questions, factual answers, casual chat
-- If you're not sure if a GIF fits, DON'T use one - text and emojis are fine!
-- Maximum 1-2 GIFs per 10 messages - be selective!`;
+- For unrequested GIFs: only use when genuinely funny or perfectly captures the moment
+- Be creative with GIF search terms - use the conversation context to pick relevant/funny ones!`;
 
       let conversationHistory = '';
       if (context.length > 0) {
