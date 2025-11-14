@@ -80,6 +80,23 @@ discord.on('messageCreate', async (message) => {
       .replace(new RegExp(`<@!?${discord.user.id}>`), '')
       .trim();
 
+    // Handle model switching command
+    if (prompt.toLowerCase().startsWith('model')) {
+      const args = prompt.split(' ');
+
+      if (args.length === 1) {
+        // Show current model
+        await message.reply(`Current model: **${llama.modelName}** 🤖`);
+        return;
+      }
+
+      const newModel = args.slice(1).join(' ');
+      llama.modelName = newModel;
+      await message.reply(`Switched to model: **${newModel}** ✅`);
+      console.log(`🔄 Model switched to: ${newModel}`);
+      return;
+    }
+
     if (!prompt) {
       prompt = "Hey!";
     }
